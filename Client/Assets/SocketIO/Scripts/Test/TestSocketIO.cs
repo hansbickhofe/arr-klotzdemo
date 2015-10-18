@@ -15,9 +15,10 @@ public class TestSocketIO : MonoBehaviour
 	int arraySize;
 	public int lifeTime = 100;
 	
+	public GameObject ship;
 	int id;
 	float xPos;
-	float yPos;
+	float zPos;
 	int time;
 	
 	public void Start() {
@@ -32,13 +33,13 @@ public class TestSocketIO : MonoBehaviour
 			//create random values
 			id = UnityEngine.Random.Range(0,10);
 			xPos = UnityEngine.Random.Range(-5.0f,5.0f);
-			yPos = UnityEngine.Random.Range(-5.0f,5.0f);
+			zPos = UnityEngine.Random.Range(-5.0f,5.0f);
 			time = 0;
 
 			Dictionary<string,string> json = new Dictionary<string, string>();
 			json.Add("id",id.ToString());
 			json.Add("xPos",xPos.ToString());
-			json.Add("yPos",yPos.ToString());
+			json.Add("yPos",zPos.ToString());
 			json.Add("time",time.ToString());
 
 			socket.Emit("channelname",new JSONObject(json));
@@ -50,11 +51,11 @@ public class TestSocketIO : MonoBehaviour
 	public void receiveSocketData(SocketIOEvent e){
 		Debug.Log("[SocketIO] data received: " + e.name + " " + e.data);
 		JSONObject jo = e.data as JSONObject;
-		print ("-> "+ jo["id"].str +" "+ jo["xPos"].str +" "+ jo["yPos"].str+" "+ jo["time"].str);
+		//print ("-> "+ jo["id"].str +" "+ jo["xPos"].str +" "+ jo["yPos"].str+" "+ jo["time"].str);
 
 		id = int.Parse(jo["id"].str);
 		xPos = float.Parse(jo["xPos"].str);
-		yPos = float.Parse(jo["yPos"].str);
+		zPos = float.Parse(jo["yPos"].str);
 		time = int.Parse(jo["time"].str);
 		ProcessData();
 		CleanupOldData();
@@ -67,7 +68,10 @@ public class TestSocketIO : MonoBehaviour
 		arraySize = allShips.Count;
 		for (int i = 0; i<arraySize; i++){
 			if ((int)allShips[i].id == id) {
-				//cube pos updaten
+				//existing ship pos updaten
+				allShips[i].xPos = xPos;
+				allShips[i].zPos = zPos;
+				allShips[i].ship.transform.position = new Vector3(xPos,0.5f,zPos);
 				print(id+": is already there!");
 				idFound = true;
 				break;
@@ -76,8 +80,14 @@ public class TestSocketIO : MonoBehaviour
 		
 		// neue id eintragen
 		if (!idFound){
-			//cube erzeugen
-			allShips.Add(new Ship(id, xPos, yPos, time));
+			//ship an random pos mit random color erzeugen
+			GameObject newShip;
+			Vector3 spawnPosition = new Vector3(xPos,2,zPos);
+			newShip = Instantiate(ship, spawnPosition, transform.rotation) as GameObject;
+			Color randomColor = new Color (UnityEngine.Random.Range(0.0f,1.0f),UnityEngine.Random.Range(0.0f,1.0f),UnityEngine.Random.Range(0.0f,1.0f));
+			newShip.GetComponent<Renderer>().material.SetColor("_Color", randomColor);
+
+			allShips.Add(new Ship(newShip, id, xPos, zPos, time));
 			print (id+": added!");
 			arraySize++;
 		}
@@ -97,7 +107,8 @@ public class TestSocketIO : MonoBehaviour
 		
 		for (int i = 0; i<arraySize; i++){
 			if (allShips[i].time > lifeTime) {
-				//cube löschen
+				//ship object und array eintrag löschen
+				Destroy(allShips[i].ship);
 				print(allShips[i].id+": Removed!");
 				allShips.RemoveAt(i);
 				break;
@@ -105,5 +116,9 @@ public class TestSocketIO : MonoBehaviour
 				allShips[i].time++;
 			}
 		}
+	}
+
+	void CreateShip(){
+
 	}
 }

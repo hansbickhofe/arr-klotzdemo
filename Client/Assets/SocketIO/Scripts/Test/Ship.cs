@@ -3,15 +3,17 @@ using System.Collections;
 
 public class Ship
 {
+	public GameObject ship;
 	public int id;
 	public float xPos;
-	public float yPos;
+	public float zPos;
 	public int time;
 
-	public Ship(int newID, float newXpos, float newYpos, int newTime){
+	public Ship(GameObject newShip, int newID, float newXpos, float newZpos, int newTime){
+		ship = newShip;
 		id = newID;
 		xPos = newXpos;
-		yPos = newYpos;
+		zPos = newZpos;
 		time = newTime;
 	}
 }
