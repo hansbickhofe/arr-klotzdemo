@@ -13,39 +13,50 @@ public class TestSocketIO : MonoBehaviour
 	//process data
 	List<Ship> allShips = new List<Ship>();
 	int arraySize;
-	public int lifeTime = 100;
-	
+	public int lifeTime;
+	float timer;
+	public float sendDataTime;
+	public int speed;
+
 	public GameObject ship;
 	int id;
 	float xPos;
 	float zPos;
-	int time;
+	int shipTime;
 	
 	public void Start() {
+		id = UnityEngine.Random.Range(0,100000);
+		xPos = UnityEngine.Random.Range(-5.0f,5.0f);
+		zPos = UnityEngine.Random.Range(-5.0f,5.0f);
+		shipTime = 0;
+
 		GameObject go = GameObject.Find("SocketIO");
 		socket = go.GetComponent<SocketIOComponent>();
 		socket.On ("channelname",receiveSocketData);
 	}
 
 	public void Update(){
-		if (Input.GetMouseButtonDown (0)){
+		xPos += Input.GetAxis ("Horizontal") * speed;
+		zPos += Input.GetAxis ("Vertical") * speed;
 
-			//create random values
-			id = UnityEngine.Random.Range(0,10);
-			xPos = UnityEngine.Random.Range(-5.0f,5.0f);
-			zPos = UnityEngine.Random.Range(-5.0f,5.0f);
-			time = 0;
-
-			Dictionary<string,string> json = new Dictionary<string, string>();
-			json.Add("id",id.ToString());
-			json.Add("xPos",xPos.ToString());
-			json.Add("yPos",zPos.ToString());
-			json.Add("time",time.ToString());
-
-			socket.Emit("channelname",new JSONObject(json));
-
-			print ("json send: "+json);
+		//timer
+		timer += Time.deltaTime;
+		if (timer > sendDataTime) {
+			SendJsonData();
+			timer = 0;
 		}
+	}
+
+	public void SendJsonData(){
+		Dictionary<string,string> json = new Dictionary<string, string>();
+		json.Add("id",id.ToString());
+		json.Add("xPos",xPos.ToString());
+		json.Add("yPos",zPos.ToString());
+		json.Add("time",shipTime.ToString());
+		
+		socket.Emit("channelname",new JSONObject(json));
+		
+		print ("json send: "+json);
 	}
 	
 	public void receiveSocketData(SocketIOEvent e){
@@ -56,7 +67,7 @@ public class TestSocketIO : MonoBehaviour
 		id = int.Parse(jo["id"].str);
 		xPos = float.Parse(jo["xPos"].str);
 		zPos = float.Parse(jo["yPos"].str);
-		time = int.Parse(jo["time"].str);
+		shipTime = int.Parse(jo["time"].str);
 		ProcessData();
 		CleanupOldData();
 	}
@@ -72,6 +83,7 @@ public class TestSocketIO : MonoBehaviour
 				allShips[i].xPos = xPos;
 				allShips[i].zPos = zPos;
 				allShips[i].ship.transform.position = new Vector3(xPos,0.5f,zPos);
+				allShips[i].time = shipTime;
 				print(id+": is already there!");
 				idFound = true;
 				break;
@@ -87,7 +99,8 @@ public class TestSocketIO : MonoBehaviour
 			Color randomColor = new Color (UnityEngine.Random.Range(0.0f,1.0f),UnityEngine.Random.Range(0.0f,1.0f),UnityEngine.Random.Range(0.0f,1.0f));
 			newShip.GetComponent<Renderer>().material.SetColor("_Color", randomColor);
 
-			allShips.Add(new Ship(newShip, id, xPos, zPos, time));
+			// neue daten ins array schreiben
+			allShips.Add(new Ship(newShip, id, xPos, zPos, shipTime));
 			print (id+": added!");
 			arraySize++;
 		}
