@@ -18,11 +18,19 @@ public class TestSocketIO : MonoBehaviour
 	public float sendDataTime;
 	public int speed;
 
+	//own ship
 	public GameObject ship;
 	int id;
 	float xPos;
 	float zPos;
 	int shipTime;
+
+	//received ship data
+	public GameObject r_ship;
+	int r_id;
+	float r_xPos;
+	float r_zPos;
+	int r_shipTime;
 	
 	public void Start() {
 		id = UnityEngine.Random.Range(0,100000);
@@ -64,10 +72,10 @@ public class TestSocketIO : MonoBehaviour
 		JSONObject jo = e.data as JSONObject;
 		//print ("-> "+ jo["id"].str +" "+ jo["xPos"].str +" "+ jo["yPos"].str+" "+ jo["time"].str);
 
-		id = int.Parse(jo["id"].str);
-		xPos = float.Parse(jo["xPos"].str);
-		zPos = float.Parse(jo["yPos"].str);
-		shipTime = int.Parse(jo["time"].str);
+		r_id = int.Parse(jo["id"].str);
+		r_xPos = float.Parse(jo["xPos"].str);
+		r_zPos = float.Parse(jo["yPos"].str);
+		r_shipTime = int.Parse(jo["time"].str);
 		ProcessData();
 		CleanupOldData();
 	}
@@ -78,12 +86,12 @@ public class TestSocketIO : MonoBehaviour
 		// check if id already exists
 		arraySize = allShips.Count;
 		for (int i = 0; i<arraySize; i++){
-			if ((int)allShips[i].id == id) {
+			if ((int)allShips[i].id == r_id) {
 				//existing ship pos updaten
-				allShips[i].xPos = xPos;
-				allShips[i].zPos = zPos;
-				allShips[i].ship.transform.position = new Vector3(xPos,0.5f,zPos);
-				allShips[i].time = shipTime;
+				allShips[i].xPos = r_xPos;
+				allShips[i].zPos = r_zPos;
+				allShips[i].ship.transform.position = new Vector3(r_xPos,0.5f,r_zPos);
+				allShips[i].time = r_shipTime;
 				print(id+": is already there!");
 				idFound = true;
 				break;
@@ -94,25 +102,25 @@ public class TestSocketIO : MonoBehaviour
 		if (!idFound){
 			//ship an random pos mit random color erzeugen
 			GameObject newShip;
-			Vector3 spawnPosition = new Vector3(xPos,2,zPos);
+			Vector3 spawnPosition = new Vector3(r_xPos,2,r_zPos);
 			newShip = Instantiate(ship, spawnPosition, transform.rotation) as GameObject;
 			Color randomColor = new Color (UnityEngine.Random.Range(0.0f,1.0f),UnityEngine.Random.Range(0.0f,1.0f),UnityEngine.Random.Range(0.0f,1.0f));
 			newShip.GetComponent<Renderer>().material.SetColor("_Color", randomColor);
 
 			// neue daten ins array schreiben
-			allShips.Add(new Ship(newShip, id, xPos, zPos, shipTime));
-			print (id+": added!");
+			allShips.Add(new Ship(newShip, r_id, r_xPos, r_zPos, r_shipTime));
+			print (r_id+": added!");
 			arraySize++;
 		}
 
 		//check array for debug
-		string listString = "";
-		
-		for (int i = 0; i<arraySize; i++){
-			listString += allShips[i].id+", ";
-		}
-		
-		print(arraySize+" : "+listString);
+//		string listString = "";
+//		
+//		for (int i = 0; i<arraySize; i++){
+//			listString += allShips[i].id+", ";
+//		}
+//		
+//		print(arraySize+" : "+listString);
 	}
 	
 	void CleanupOldData(){
@@ -129,9 +137,5 @@ public class TestSocketIO : MonoBehaviour
 				allShips[i].time++;
 			}
 		}
-	}
-
-	void CreateShip(){
-
 	}
 }
