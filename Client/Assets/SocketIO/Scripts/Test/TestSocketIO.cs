@@ -44,8 +44,25 @@ public class TestSocketIO : MonoBehaviour
 	}
 
 	public void Update(){
+		//keyboard
 		xPos += Input.GetAxis ("Horizontal") * speed;
 		zPos += Input.GetAxis ("Vertical") * speed;
+
+		//mouse move
+		RaycastHit hit;
+		Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+		//touch
+		if (Input.touchCount > 0){
+			ray = Camera.main.ScreenPointToRay(Input.GetTouch(0).position);
+		}
+
+		if (Physics.Raycast(ray, out hit)){
+			if (hit.rigidbody != null && hit.rigidbody.tag == "Background"){
+				xPos = hit.point.x;
+				zPos = hit.point.z;
+			}
+		}
 
 		//timer
 		timer += Time.deltaTime;
@@ -66,6 +83,8 @@ public class TestSocketIO : MonoBehaviour
 		
 		print ("json send: "+json);
 	}
+
+	//------------------------------------------------------------------//
 	
 	public void receiveSocketData(SocketIOEvent e){
 		Debug.Log("[SocketIO] data received: " + e.name + " " + e.data);
